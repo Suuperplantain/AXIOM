@@ -8,7 +8,7 @@ The current system is centered around learning an internal model of visual data.
 
 The diagram below shows the current visual architecture of the VAE training loop used in the project.
 
-![Current VAE Training Loop](docs/vae-training-loop.png)
+![Current VAE Training Loop](docs/vae-training-loop.PNG)
 
 ## Architectural Overview
 
