@@ -1,52 +1,102 @@
 # AXIOM
 
-AXIOM is an in-development world-model project focused on building and testing a foundational learning architecture before moving into more advanced application domains. At this stage, the emphasis is on validating core representation-learning behaviour on simpler datasets and controlled inputs rather than deploying a finished end-to-end system.
+AXIOM is an experimental world-model project focused on validating a strong representation-learning foundation before expanding into more advanced reasoning or decision-making systems. The current goal is not to ship a finished end-to-end product, but to prove that the core architecture can learn stable, reusable internal representations in controlled settings.
 
-The current system is centered around learning an internal model of visual data. In practical terms, this means training the model to compress observations into a lower-dimensional latent representation, reconstruct them through a decoder, and use the reconstruction error as a learning signal. This allows the project to test whether the system is forming stable and meaningful internal structure before introducing more complex reasoning, planning, or decision layers.
+At its current stage, AXIOM learns an internal model of visual data by compressing observations into a latent space, reconstructing them through a decoder, and using reconstruction quality as the training signal. This makes it possible to test whether the model is learning meaningful internal structure before introducing higher-level modules.
+
+---
 
 ## Visual Architecture
 
-The diagram below shows the current visual architecture of the VAE training loop used in the project.
+The diagram below shows the current VAE training loop used in the project.
 
 ![Current VAE Training Loop](docs/vae-training-loop.PNG)
 
-## Architectural Overview
+---
 
-The implemented architecture is currently organized around the following stages:
+## What AXIOM Does
 
-- **Data Preparation and Caching**  
-  Input data is preprocessed into a more efficient cached format to support repeatable experiments and reduce training overhead.
+AXIOM currently focuses on the following pipeline:
 
-- **Encoding / Representation Learning**  
-  An encoder processes observations and maps them into a compact latent space. This latent representation is intended to capture the most relevant structural features of the dataset while reducing raw input complexity.
+- **Preprocess and cache input data** to support repeatable experiments and reduce training overhead.
+- **Encode observations into a latent space** that captures important structure in a compact form.
+- **Decode latent representations back into observations** to measure how much useful information has been preserved.
+- **Train through reconstruction loss** so the encoder and decoder improve together.
+- **Export latent statistics and model components** for reuse without retraining the full pipeline.
+- **Test memory-style reconstruction** by training secondary decoding stages from stored latent states.
 
-- **Latent Space Formation**  
-  The latent layer acts as the model’s compressed internal state. Rather than working directly on raw observations, the system learns to represent data in a form that is easier to store, compare, and reconstruct.
+This setup allows the project to evaluate whether the learned latent space is compact, stable, and reusable rather than simply memorizing raw inputs.
 
-- **Decoding / Reconstruction**  
-  A decoder reconstructs the observation from the latent representation. This provides a direct way to evaluate whether the internal representation preserves meaningful information.
+---
 
-- **Loss-Based Feedback Loop**  
-  The reconstruction is compared with the original input, and the resulting loss is used to update the model. This creates the training loop that gradually improves the encoder-decoder pair.
+## Architecture Overview
 
-- **Latent Export and Reuse**  
-  Latent statistics can be exported into an intermediate format so learned representations can be reused beyond the initial training pass.
+### 1. Data Preparation and Caching
+Inputs are preprocessed and cached to keep experiments reproducible and training efficient.
 
-- **Memory-Oriented Reconstruction Stage**  
-  A separate decoding stage can be trained from stored latent outputs, allowing the project to test how well learned internal representations can function as a reusable memory layer.
+### 2. Encoding / Representation Learning
+An encoder transforms observations into a compressed latent representation that captures key structural features while reducing raw complexity.
 
-## Development Focus
+### 3. Latent Space Formation
+The latent layer acts as the model’s internal state: compact enough to store and compare, but rich enough to support reconstruction.
 
-This repository should currently be understood as an experimental architecture in progress. The immediate objective is to confirm that the model can learn useful internal representations, preserve them in latent form, and reconstruct meaningful structure from them with reasonable stability.
+### 4. Decoding / Reconstruction
+A decoder reconstructs observations from the latent representation, providing a direct test of what the model has retained.
 
-At the present stage, the project is mainly exploring questions such as:
+### 5. Loss-Driven Feedback
+The reconstruction is compared with the original input, and the resulting loss is used to improve the encoder–decoder pair.
 
-- can the model learn a compact and consistent internal representation of the dataset,
-- can that representation be exported and reused without retraining the full pipeline,
-- and can the reconstruction process confirm that the latent space is capturing meaningful information rather than noise
+### 6. Latent Export and Reuse
+Latent statistics and trained components can be exported so learned representations can be reused in downstream experiments without rerunning the entire pipeline.
 
-Higher-level modules will be introduced only after the representation, memory, and reconstruction pipeline has been tested thoroughly enough to serve as a reliable foundation.
+### 7. Memory-Oriented Reconstruction
+A secondary decoding stage can be trained from stored latents to test whether those internal states function as a practical reusable memory layer.
+
+---
+
+## Current Development Focus
+
+AXIOM is intentionally exploratory. Right now, the project is focused on confirming that the underlying system can:
+
+- learn compact and consistent internal representations,
+- reuse exported representations without retraining the full pipeline, and
+- reconstruct meaningful structure from latent states with reasonable stability.
+
+Higher-level reasoning, control, or decision-making modules will only be added once the representation, memory, and reconstruction pipeline has been shown to be reliable.
+
+---
+
+## Recent Outcomes
+
+Recent experiments have produced encouraging results:
+
+- Strong test win rates across multiple assets using anomaly-plus-confidence thresholding on VAE latents.
+- Encoder/decoder SavedModels and weights exported alongside ensemble classifiers for inference without custom retraining code.
+- In-memory rendering and cached preprocessing kept I/O overhead low and experiments reproducible.
+- XLA/cuDNN autotuning occasionally emitted benign `timer timed out` warnings on some accelerators, but training completed successfully.
+
+---
+
+## Latest Multi-Asset Test + Grid-Search Results
+
+**1h data, profit-aware thresholds**
+
+| Asset   | Best Anomaly | Best Confidence | Trades | Final Win % |
+|:--------|-------------:|----------------:|-------:|------------:|
+| NQ=F    | 0.03 | 0.60 | 29   | 72.41 |
+| ETH-USD | 0.03 | 0.60 | 1001 | 69.63 |
+| GC=F    | 0.04 | 0.55 | 29   | 72.41 |
+| CL=F    | 0.01 | 0.70 | 24   | 75.00 |
+| NG=F    | 0.05 | 0.55 | 26   | 84.62 |
+| HG=F    | 0.01 | 0.65 | 226  | 69.47 |
+| PL=F    | 0.04 | 0.70 | 48   | 83.33 |
+
+*Trades and win rates are taken from the test slice after grid-searching anomaly MSE and random-forest confidence thresholds under a minimum-trade constraint.*
+
+---
 
 ## Project Status
 
-AXIOM is currently a work in progress. The architecture is still evolving, and the repository is intended to document the direction of the system while development continues.
+AXIOM is still in active development. The architecture is evolving, and this repository serves as both a working prototype and a record of the design decisions, experiments, and lessons learned so far.
+
+The current priority is to establish a reliable foundation for representation learning and latent-memory reuse before extending the system into broader world-model capabilities.
