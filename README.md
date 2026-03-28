@@ -79,17 +79,17 @@ Recent experiments have produced encouraging results:
 
 ## Latest Multi-Asset Test + Grid-Search Results
 
-**1h data, profit-aware thresholds**
+**1h data, test slice**
 
-| Asset   | Best Anomaly | Best Confidence | Trades | Final Win % |
-|:--------|-------------:|----------------:|-------:|------------:|
-| NQ=F    | 0.03 | 0.60 | 29   | 72.41 |
-| ETH-USD | 0.03 | 0.60 | 1001 | 69.63 |
-| GC=F    | 0.04 | 0.55 | 29   | 72.41 |
-| CL=F    | 0.01 | 0.70 | 24   | 75.00 |
-| NG=F    | 0.05 | 0.55 | 26   | 84.62 |
-| HG=F    | 0.01 | 0.65 | 226  | 69.47 |
-| PL=F    | 0.04 | 0.70 | 48   | 83.33 |
+| Asset   | Trades | Win % |
+|:--------|-------:|------:|
+| NQ=F    | 29   | 72.41 |
+| ETH-USD | 1001 | 69.63 |
+| GC=F    | 29   | 72.41 |
+| CL=F    | 24   | 75.00 |
+| NG=F    | 26   | 84.62 |
+| HG=F    | 226  | 69.47 |
+| PL=F    | 48   | 83.33 |
 
 *Trades and win rates are taken from the test slice after grid-searching anomaly MSE and random-forest confidence thresholds under a minimum-trade constraint.*
 
