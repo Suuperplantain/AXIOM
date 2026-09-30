@@ -1,102 +1,135 @@
 # AXIOM
 
-AXIOM is an experimental world-model project focused on validating a strong representation-learning foundation before expanding into more advanced reasoning or decision-making systems. The current goal is not to ship a finished end-to-end product, but to prove that the core architecture can learn stable, reusable internal representations in controlled settings.
+AXIOM is an experimental predictive-intelligence project. The work started with visual representation learning, then grew into a broader question: can a model build useful internal states, remember how those states change, and make causal predictions from noisy sequences without being handed a fixed set of patterns?
 
-At its current stage, AXIOM learns an internal model of visual data by compressing observations into a latent space, reconstructing them through a decoder, and using reconstruction quality as the training signal. This makes it possible to test whether the model is learning meaningful internal structure before introducing higher-level modules.
+The project is now well beyond the original VAE prototype. It includes latent representation learning, transition models, causal sequence models, hidden-state discovery, episodic memory, belief retirement, deterministic replay, and strict chronological evaluation. Financial markets are one demanding test environment for the system, but the main work is the design of the learning architecture itself.
 
----
+This repository is a public research summary. The larger datasets, model artifacts, and replay archives are kept private because of their size.
 
-## Visual Architecture
+## Current Research System
 
-The diagram below shows the current VAE training loop used in the project.
+```mermaid
+flowchart LR
+    A[Raw observations] --> B[Validation and deterministic replay]
+    B --> C[Past-only state builder]
+    C --> D[Representation and sequence core]
+    D --> E[Short-term memory]
+    D --> F[Long-term episode retrieval]
+    D --> G[Invented hidden states]
+    E --> H[Multi-horizon predictions]
+    F --> H
+    G --> H
+    H --> I[Boosted model challenger]
+    H --> J[Causal Transformer challenger]
+    I --> K[Chronological evaluation]
+    J --> K
+    K --> L[Critic, calibration and belief health]
+    L --> D
+```
 
-![Current VAE Training Loop](docs/vae-training-loop.PNG)
+The design deliberately separates what the model knew at decision time from what happened later. Runtime evidence and future labels live in different tables, targets cannot cross collection boundaries, and model selection uses earlier tuning data rather than the final diagnostic slice.
 
----
+## What We Have Built
 
-## What AXIOM Does
+### Representation and latent memory
 
-AXIOM currently focuses on the following pipeline:
+The first AXIOM experiments used variational autoencoders to compress observations into reusable latent vectors. We tested whether those vectors could reconstruct the original input, survive export and reload, and support a second memory-style decoder without rerunning the complete pipeline.
 
-- **Preprocess and cache input data** to support repeatable experiments and reduce training overhead.
-- **Encode observations into a latent space** that captures important structure in a compact form.
-- **Decode latent representations back into observations** to measure how much useful information has been preserved.
-- **Train through reconstruction loss** so the encoder and decoder improve together.
-- **Export latent statistics and model components** for reuse without retraining the full pipeline.
-- **Test memory-style reconstruction** by training secondary decoding stages from stored latent states.
+That phase established the basic idea of a learned internal state, but reconstruction alone was not enough. A model can reproduce an observation without understanding why it changed.
 
-This setup allows the project to evaluate whether the learned latent space is compact, stable, and reusable rather than simply memorizing raw inputs.
+### Transition and world modeling
 
----
+The next stage added patch-based Transformers, discrete stochastic latents, transition prediction, reward/value heads, and walk-forward evaluation. Instead of only asking the model to recreate the present, we asked it to estimate how the state could evolve and to represent uncertainty over several possible futures.
 
-## Architecture Overview
+This work exposed an important limitation: accurate-looking averages can hide weak directional reasoning. That led us away from single headline accuracy numbers and toward path forecasts, uncertainty, likely pain, favourable movement, and state-transition quality.
 
-### 1. Data Preparation and Caching
-Inputs are preprocessed and cached to keep experiments reproducible and training efficient.
+### Hidden-state and causal discovery
 
-### 2. Encoding / Representation Learning
-An encoder transforms observations into a compressed latent representation that captures key structural features while reducing raw complexity.
+We built controlled simulations where an observable entity was affected by direct causes, indirect causes, delayed effects, noise, and unobserved variables. The learner had to infer relationships from how variables changed over time rather than from hard-coded state names.
 
-### 3. Latent Space Formation
-The latent layer acts as the model’s internal state: compact enough to store and compare, but rich enough to support reconstruction.
+The resulting prototype studies:
 
-### 4. Decoding / Reconstruction
-A decoder reconstructs observations from the latent representation, providing a direct test of what the model has retained.
+- how much one variable changes another per unit time;
+- direct effects, indirect effects, and changing delays;
+- hidden causes that alter several visible relationships at once;
+- confidence based on repeated causal chains rather than one correlation;
+- separate short-term sequence memory and long-term episode summaries;
+- stale beliefs that move from trusted to warning, suspended, and retired;
+- specialised sub-models that share evidence only when it improves another model.
 
-### 5. Loss-Driven Feedback
-The reconstruction is compared with the original input, and the resulting loss is used to improve the encoder–decoder pair.
+Several simpler baselines, including logistic regression and boosted trees, were kept in the experiments. When a simpler model won, we treated that as useful evidence about the task rather than hiding it.
 
-### 6. Latent Export and Reuse
-Latent statistics and trained components can be exported so learned representations can be reused in downstream experiments without rerunning the entire pipeline.
+### Causal predictive modeling
 
-### 7. Memory-Oriented Reconstruction
-A secondary decoding stage can be trained from stored latents to test whether those internal states function as a practical reusable memory layer.
+The latest research system works from ordered multi-source event streams. It reconstructs state, produces past-only decision snapshots, and predicts future paths at multiple horizons. Boosted table models and causal Transformers receive the same evidence so the comparison is fair.
 
----
+The current architecture combines:
 
-## Current Development Focus
+- a shared sequence core for behaviour that repeats across related systems;
+- private adapters so each exact system can keep its own behaviour and memory;
+- independent challengers for cases with enough evidence to support a separate model;
+- episodic retrieval of similar completed sequences;
+- separate long, short, entry, exit, uncertainty, and risk estimates;
+- a critic that tracks whether a belief still works and retires it when repeated failures accumulate.
 
-AXIOM is intentionally exploratory. Right now, the project is focused on confirming that the underlying system can:
+Rust handles deterministic replay, state reconstruction, simulation, feature generation, and storage. Python and PyTorch handle research, boosted learners, neural sequence models, and evaluation.
 
-- learn compact and consistent internal representations,
-- reuse exported representations without retraining the full pipeline, and
-- reconstruct meaningful structure from latent states with reasonable stability.
+## Measured Progress
 
-Higher-level reasoning, control, or decision-making modules will only be added once the representation, memory, and reconstruction pipeline has been shown to be reliable.
+The old README highlighted grid-searched trade win rates. Those figures described selected thresholds on individual test slices, not a dependable measure of general predictive ability, so they are no longer used as the headline metric.
 
----
+The latest verified data and modeling checkpoint is:
 
-## Recent Outcomes
+| Measure | Verified result |
+|:--|--:|
+| Ordered source events | 27,946,347 |
+| Causal decision states | 3,128,310 |
+| Block-bounded future-path targets | 2,427,164 |
+| Simulated decision journeys | 813,213 |
+| Long / short journey balance | 406,542 / 406,671 |
+| Independent data blocks | 4 |
+| Data sources | 6 venues |
+| Exact systems tracked | 77 |
+| Shared-model eligible systems | 62 |
+| Private-adapter eligible systems | 63 |
+| Independent challenger candidates | 8 |
 
-Recent experiments have produced encouraging results:
+The assembled dataset is 2.269 GiB across 87 files. Two complete assembly passes received the input partitions in different orders and produced the same content hash. This matters because the result should come from the evidence, not from accidental file ordering.
 
-- Strong test win rates across multiple assets using anomaly-plus-confidence thresholding on VAE latents.
-- Encoder/decoder SavedModels and weights exported alongside ensemble classifiers for inference without custom retraining code.
-- In-memory rendering and cached preprocessing kept I/O overhead low and experiments reproducible.
-- XLA/cuDNN autotuning occasionally emitted benign `timer timed out` warnings on some accelerators, but training completed successfully.
+The current boosted-model stage trained 118 of 124 movement sides and 124 of 126 entry/exit sides. The missing sides were rejected because their chronological training partitions were too sparse, not silently filled or scored with weaker rules.
 
----
+An earlier full diagnostic compared 63 boosted path models with 63 causal Transformers. Both families found limited short-horizon predictive signal over a zero-change baseline, with the clearest improvement concentrated in part of the data. The Transformer did not consistently beat the boosted models, and longer-horizon results were not strong enough to justify a broad claim. That result changed the architecture: the next model uses a shared causal core, private adapters, and independent challengers only where the evidence supports them.
 
-## Latest Multi-Asset Test + Grid-Search Results
+## How Results Are Judged
 
-**1h data, test slice**
+AXIOM does not treat training accuracy as proof that a model understands a system. A result has to survive:
 
-| Asset   | Trades | Win % |
-|:--------|-------:|------:|
-| NQ=F    | 29   | 72.41 |
-| ETH-USD | 1001 | 69.63 |
-| GC=F    | 29   | 72.41 |
-| CL=F    | 24   | 75.00 |
-| NG=F    | 26   | 84.62 |
-| HG=F    | 226  | 69.47 |
-| PL=F    | 48   | 83.33 |
+- chronological `70/15/15` learning, tuning, and diagnostic splits;
+- a one-hour gap between splits to reduce information bleed;
+- simple baselines such as zero-change, persistence, historical averages, and boosted tables;
+- explicit checks for future-data leakage;
+- separate reporting for different directions, horizons, systems, and evidence quality;
+- save/reload equality and finite-prediction checks;
+- repeated deterministic assembly with matching hashes;
+- rejection when data, costs, timing, or coverage are not trustworthy.
 
-*Trades and win rates are taken from the test slice after grid-searching anomaly MSE and random-forest confidence thresholds under a minimum-trade constraint.*
+This makes progress slower, but it prevents a lucky slice or a convenient metric from being mistaken for intelligence.
 
----
+## What We Learned
 
-## Project Status
+The most useful result so far is architectural, not a single accuracy score.
 
-AXIOM is still in active development. The architecture is evolving, and this repository serves as both a working prototype and a record of the design decisions, experiments, and lessons learned so far.
+1. **Prediction should describe a path, not only an endpoint.** The system estimates several future horizons, likely favourable movement, likely pain, and uncertainty.
+2. **Memory needs two timescales.** Recent event sequences help with immediate changes, while completed historical episodes provide broader context.
+3. **Hidden states should earn their place.** Invented states are kept only when they improve later predictions; otherwise they are bypassed or retired.
+4. **Shared learning and individual behaviour both matter.** A shared core learns common structure, while private adapters preserve system-specific behaviour.
+5. **Confidence must come from repeated evidence.** The model tracks how often a relationship held, when it last worked, how much damage it caused when wrong, and whether a newer explanation replaced it.
+6. **A more complex model is not automatically a better model.** Boosted trees, linear baselines, latent models, and Transformers are compared on the same chronological evidence.
 
-The current priority is to establish a reliable foundation for representation learning and latent-memory reuse before extending the system into broader world-model capabilities.
+## Current Status
+
+The deterministic data and table-model stages are working and independently audited. A real GPU smoke test passed causal-data checks, finite predictions, and exact model save/reload equality. Full boosted training completed, but strict coverage checks found a few sparse instrument-direction partitions that need repair before the shared Transformer stage is unlocked.
+
+The next milestone is not to inflate an accuracy percentage. It is to finish the split-aware coverage repair, train the shared causal sequence core, attach private adapters, and test the frozen system on genuinely later data that did not exist when the models were selected.
+
+AXIOM remains a research system. It has no authority to place orders or control capital, and the current results are not a profitability claim.
