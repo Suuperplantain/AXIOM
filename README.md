@@ -10,6 +10,7 @@ This repository is a public research summary. The larger datasets, model artifac
 
 ```mermaid
 flowchart LR
+    %% Runtime evidence stays past-only; future labels are used only for later evaluation.
     A[Raw observations] --> B[Validation and deterministic replay]
     B --> C[Past-only state builder]
     C --> D[Representation and sequence core]
